@@ -1,4 +1,4 @@
-# BASELIBRARY
+# INLINE BASELIBRARY
 
 # Files comprising the target
 file(GLOB sources "*.cpp")
