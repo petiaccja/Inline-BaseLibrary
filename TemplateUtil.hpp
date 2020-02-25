@@ -120,5 +120,12 @@ template <class T, bool Const>
 using add_const_conditional_t = typename add_const_conditional<T, Const>::type;
 
 
+// dependent integral constant for static asserts
+template <class DependencyT, class T, T Value>
+struct dependent_integral_constant {
+	static constexpr T value = Value;
+};
+
+
 
 } // namespace inl::templ
