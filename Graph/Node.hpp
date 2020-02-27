@@ -187,6 +187,19 @@ private:
 template <>
 class InputPortConfig<> : virtual public NodeBase {
 public:
+	/// <summary> Get reference to typed input port by its index. </summary>
+	template <size_t Index>
+	auto& GetInput() {
+		static_assert(false);
+	}
+
+	/// <summary> Get reference to typed input port by its index. </summary>
+	template <size_t Index>
+	const auto& GetInput() const {
+		static_assert(false);
+	}
+
+
 	size_t GetNumInputs() const override {
 		return 0;
 	}
@@ -299,6 +312,18 @@ private:
 template <>
 class OutputPortConfig<> : virtual public NodeBase {
 public:
+	/// <summary> Get reference to typed output port by its index. </summary>
+	template <size_t Index>
+	auto& GetOutput() {
+		static_assert(false);
+	}
+
+	/// <summary> Get reference to typed output port by its index. </summary>
+	template <size_t Index>
+	const auto& GetOutput() const {
+		static_assert(false);
+	}
+
 	/// <summary> Returns the number of outputs. </summary>
 	size_t GetNumOutputs() const override {
 		return 0;
