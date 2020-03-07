@@ -298,4 +298,52 @@ std::basic_string<OutChar, OutTraits, OutAllocator> EncodeString(const InStringT
 
 
 
+/// <summary>Detailed information to print an error message. Use for compiler/parser error messages. </summary>
+/// <remarks> See also <see cref="FindStringErrorLocation"/>. </remarks>
+template <class CharT, class Traits>
+struct StringErrorLocation {
+	/// <summary> Which line the queried character is in. </summary>
+	int lineNumber;
+	/// <summary> Column index of the queried character within its line. </summary>
+	int characterNumber;
+	/// <summary> The complete text of the line the queried character is in. </summary>
+	std::basic_string<CharT, Traits> line;
+};
+
+/// <summary> Find the details of the location of a character at a specific index in a string.
+///		Use for compiler/parser error messages. </summary>
+///	<param name="str"> String to analyze. </param>
+///	<param name="index"> The index of the character to retrieve information for. </param>
+template <class CharT, class Traits>
+StringErrorLocation<CharT, Traits> FindStringErrorLocation(std::basic_string_view<CharT, Traits> str, size_t index) {
+	int currentCharacter = 0;
+	int characterNumber = 0;
+	int lineNumber = 0;
+	while (currentCharacter < index && currentCharacter < str.size()) {
+		if (str[currentCharacter] == '\n') {
+			++lineNumber;
+			characterNumber = 0;
+		}
+		++currentCharacter;
+		++characterNumber;
+	}
+
+	size_t lineBegIdx = str.rfind('\n', index);
+	size_t lineEndIdx = str.find('\n', index);
+
+	if (lineBegIdx = str.npos) {
+		lineBegIdx = 0;
+	}
+	else {
+		++lineBegIdx; // we don't want to keep the '\n'
+	}
+	if (lineEndIdx != str.npos && lineEndIdx > 0) {
+		--lineEndIdx; // we don't want to keep the '\n'
+	}
+
+	return { lineNumber, characterNumber, std::basic_string<CharT,Traits>(str.substr(lineBegIdx, lineEndIdx)) };
+}
+
+
+
 } // namespace inl

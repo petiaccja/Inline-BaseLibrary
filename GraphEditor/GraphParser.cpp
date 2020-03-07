@@ -4,12 +4,14 @@
 
 #include <BaseLibrary/Exception/Exception.hpp>
 #include <BaseLibrary/Range.hpp>
+#include <BaseLibrary/StringUtil.hpp>
 
 #include <rapidjson/document.h>
 #include <rapidjson/encodings.h>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/stringbuffer.h>
 #include <sstream>
+#include <InlineMath.hpp>
 
 
 namespace inl {
@@ -21,14 +23,6 @@ namespace inl {
 static void AssertThrow(bool condition, const std::string& message);
 static NodeDescription ParseNode(const rapidjson::GenericValue<rapidjson::UTF8<>>& jsonObj);
 static LinkDescription ParseLink(const rapidjson::GenericValue<rapidjson::UTF8<>>& jsonObj);
-
-struct StringErrorPosition {
-	int lineNumber;
-	int characterNumber;
-	std::string line;
-};
-static StringErrorPosition GetStringErrorPosition(const std::string& str, size_t errorCharacter);
-
 
 
 //------------------------------------------------------------------------------
@@ -258,7 +252,7 @@ void GraphParser::ParseDocument(const std::string& document) {
 	ParseErrorCode ec = doc.GetParseError();
 	if (ec != ParseErrorCode::kParseErrorNone) {
 		size_t errorCharacter = doc.GetErrorOffset();
-		auto [lineNumber, characterNumber, line] = GetStringErrorPosition(document, errorCharacter);
+		auto [lineNumber, characterNumber, line] = FindStringErrorLocation(std::string_view{ document }, errorCharacter);
 		throw InvalidArgumentException("JSON descripion has syntax errors.", "Check line " + std::to_string(lineNumber) + ":" + std::to_string(characterNumber));
 	}
 	AssertThrow(doc.IsObject(), R"(JSON root must be an object with member arrays "nodes" and "links".)");
@@ -515,37 +509,6 @@ LinkDescription ParseLink(const rapidjson::GenericValue<rapidjson::UTF8<>>& obj)
 
 	return info;
 }
-
-
-StringErrorPosition GetStringErrorPosition(const std::string& str, size_t errorCharacter) {
-	int currentCharacter = 0;
-	int characterNumber = 0;
-	int lineNumber = 0;
-	while (currentCharacter < errorCharacter && currentCharacter < str.size()) {
-		if (str[currentCharacter] == '\n') {
-			++lineNumber;
-			characterNumber = 0;
-		}
-		++currentCharacter;
-		++characterNumber;
-	}
-
-	size_t lineBegIdx = str.rfind('\n', errorCharacter);
-	size_t lineEndIdx = str.find('\n', errorCharacter);
-
-	if (lineBegIdx = str.npos) {
-		lineBegIdx = 0;
-	}
-	else {
-		++lineBegIdx; // we don't want to keep the '\n'
-	}
-	if (lineEndIdx != str.npos && lineEndIdx > 0) {
-		--lineEndIdx; // we don't want to keep the '\n'
-	}
-
-	return { lineNumber, characterNumber, str.substr(lineBegIdx, lineEndIdx) };
-}
-
 
 
 } // namespace inl
