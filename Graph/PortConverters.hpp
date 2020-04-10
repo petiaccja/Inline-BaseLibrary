@@ -137,7 +137,7 @@ public:
 protected:
 	template <class T2, bool Packed2>
 	static VectorT FromVector(const Vector<T2, Dim, Packed2>& src) {
-		src.Length();
+		Length(src);
 		return VectorT(src);
 	}
 

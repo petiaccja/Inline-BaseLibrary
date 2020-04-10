@@ -127,7 +127,7 @@ protected:
 	// Helper functions
 	static MatLinT ToRotationMatrix(const RotT& arg) {
 		if constexpr (Dim == 2) {
-			return MatLinT::Rotation(arg);
+			return inl::Rotation(arg);
 		}
 		else {
 			return (MatLinT)arg;
@@ -154,12 +154,12 @@ protected:
 			return -arg;
 		}
 		else {
-			return arg.Conjugate();
+			return Conjugate(arg);
 		}
 	}
 	static VectorT RotateVector(const VectorT& vec, const RotT& rot) {
 		if constexpr (Dim == 2) {
-			return vec * Mat22::Rotation(rot);
+			return vec * Mat22(inl::Rotation(rot));
 		}
 		else {
 			return vec * rot;
@@ -170,7 +170,7 @@ protected:
 			return T(0);
 		}
 		else {
-			return Quat::Identity();
+			return Identity();
 		}
 	}
 
@@ -242,9 +242,7 @@ void Transform23Base<T, Dim>::SetScale(const VectorT& scale) {
 template <class T, int Dim>
 void Transform23Base<T, Dim>::SetLinearMatrix(const MatLinT& transform) {
 	// Break matrix into rot1, scale and rot2 components via SVD.
-	MatLinT U, S, V;
-	transform.DecomposeSVD(U, S, V);
-	MatLinT A = U * S * V;
+	auto [U, S, V] = DecomposeSVD(transform);
 	for (int i = 0; i < Dim; ++i) {
 		scale(i) = S(i, i);
 	}
@@ -277,17 +275,17 @@ void Transform23Base<T, Dim>::SetMatrix(const MatHomT& transform) {
 template <class T, int Dim>
 typename Transform23Base<T, Dim>::MatLinT Transform23Base<T, Dim>::GetLinearMatrix() const {
 	if constexpr (matrix_props::order == eMatrixOrder::FOLLOW_VECTOR) {
-		return ToRotationMatrix(rotation1) * MatLinT::Scale(scale) * ToRotationMatrix(rotation2);
+		return ToRotationMatrix(rotation1) * MatLinT(inl::Scale(scale)) * ToRotationMatrix(rotation2);
 	}
 	else {
-		return ToRotationMatrix(rotation2) * MatLinT::Scale(scale) * ToRotationMatrix(rotation1);
+		return ToRotationMatrix(rotation2) * MatLinT(inl::Scale(scale)) * ToRotationMatrix(rotation1);
 	}
 }
 
 template <class T, int Dim>
 typename Transform23Base<T, Dim>::MatHomT Transform23Base<T, Dim>::GetMatrix() const {
 	MatLinT linear = GetLinearMatrix();
-	MatHomT tr = MatHomT::Translation(position);
+	MatHomT tr = Translation(position);
 	tr.Submatrix<Dim, Dim>(0, 0) = linear;
 	return tr;
 }
@@ -308,7 +306,7 @@ void Transform23Base<T, Dim>::Rotate(const RotT& rot) {
 template <class T, int Dim>
 void Transform23Base<T, Dim>::Scale(const VectorT& scale) {
 	MatLinT linear = GetLinearMatrix();
-	MatLinT postScale = MatLinT::Scale(scale);
+	MatLinT postScale = inl::Scale(scale);
 
 	if constexpr (matrix_props::order == eMatrixOrder::FOLLOW_VECTOR) {
 		SetLinearMatrix(linear * postScale);
@@ -322,7 +320,7 @@ void Transform23Base<T, Dim>::Scale(const VectorT& scale) {
 template <class T, int Dim>
 void Transform23Base<T, Dim>::Shear(T slope, int primaryAxis, int perpAxis) {
 	MatLinT linear = GetLinearMatrix();
-	MatLinT postShear = MatLinT::Shear(slope, primaryAxis, perpAxis);
+	MatLinT postShear = inl::Shear(slope, primaryAxis, perpAxis);
 
 	if constexpr (matrix_props::order == eMatrixOrder::FOLLOW_VECTOR) {
 		SetLinearMatrix(linear * postShear);

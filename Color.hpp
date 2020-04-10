@@ -62,7 +62,7 @@ public:
 			transition = Saturate(transition);
 			transition *= range;
 			transition -= minval;
-			transition += 0.5;
+			transition += 0.5l;
 			v = transition;
 		}
 		// unsigned integer dst
@@ -72,7 +72,7 @@ public:
 			long double range = maxval - minval;
 			transition = Saturate(transition);
 			transition *= range;
-			transition += 0.5;
+			transition += 0.5l;
 			v = transition;
 		}
 		// floating point dst

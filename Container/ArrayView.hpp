@@ -224,12 +224,12 @@ public:
 	/// <summary> Get mutable iterator to the first element of the container. </summary>
 	template <class Q = typename impl::HasIterator<ViewT>::iterator>
 	Q begin() {
-		return impl::HasIterator<ViewT>::iterator{ GetOffsetedPointer(0) };
+		return typename impl::HasIterator<ViewT>::iterator{ GetOffsetedPointer(0) };
 	}
 	/// <summary> Get mutable iterator to the end (past the last element) of the container. </summary>
 	template <class Q = typename impl::HasIterator<ViewT>::iterator>
 	Q end() {
-		return impl::HasIterator<ViewT>::iterator{ GetOffsetedPointer(Size()) };
+		return typename impl::HasIterator<ViewT>::iterator{ GetOffsetedPointer(Size()) };
 	}
 
 	/// <summary> Get const iterator to the first element of the container. </summary>
