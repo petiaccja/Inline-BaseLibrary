@@ -11,7 +11,8 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 endif()
 
 include_directories("${CMAKE_SOURCE_DIR}/include")
-include_directories("${CMAKE_SOURCE_DIR}/external/include")
+include_directories("${CMAKE_SOURCE_DIR}/dependencies/include")
+include_directories("${CMAKE_SOURCE_DIR}/externals/include")
 
 add_subdirectory(src)
 add_subdirectory(test)
