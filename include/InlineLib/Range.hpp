@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstdint>
 #include <iterator>
+#include <limits>
 
 
 namespace inl {

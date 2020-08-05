@@ -19,7 +19,7 @@ namespace mathter {
 ///			This value is ~10^-18 for floats and ~10^-154 for doubles. </remarks>
 template <class T, int Dim, bool Packed>
 bool IsNullvector(const Vector<T, Dim, Packed>& v) {
-	static constexpr T epsilon = T(1) / ConstexprExp10<T>(ConstexprAbs(std::numeric_limits<T>::min_exponent10) / 2);
+	static constexpr T epsilon = T(1) / impl::ConstexprExp10<T>(impl::ConstexprAbs(std::numeric_limits<T>::min_exponent10) / 2);
 	T length = Length(v);
 	return length < epsilon;
 }
@@ -53,7 +53,7 @@ T LengthPrecise(const Vector<T, Dim, Packed>& v) {
 /// <summary> Returns the euclidean distance between to vectors. </summary>
 template <class T, class U, int Dim, bool Packed1, bool Packed2>
 auto Distance(const Vector<T, Dim, Packed1>& lhs, const Vector<U, Dim, Packed2>& rhs) {
-	return (lhs - rhs).Length();
+	return Length(lhs - rhs);
 }
 
 /// <summary> Makes a unit vector, but keeps direction. </summary>
