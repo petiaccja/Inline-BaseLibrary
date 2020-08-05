@@ -9,6 +9,7 @@ set(src_tests
 	"Test_ContiguousVector.cpp"
 	"Test_Delegate.cpp"
 	"Test_DynamicTuple.cpp"
+	"Test_Graph.cpp"
 	"Test_EnumFlag.cpp"
 	"Test_Event.cpp"
 	"Test_JobSystem.cpp"
