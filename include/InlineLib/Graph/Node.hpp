@@ -123,7 +123,7 @@ template <class... InputTypes, class... OutputTypes>
 class Node<InputPorts<InputTypes...>, OutputPorts<OutputTypes...>> : public NodeBase {
 public:
 	Node() = default;
-	Node(InputPort<InputTypes>&&... inputs, OutputPort<OutputTypes>&&... outputs);
+	Node(InputPort<InputTypes>... inputs, OutputPort<OutputTypes>... outputs);
 
 	template <InputPortConverter Func>
 	Node(Func commonConverter);
@@ -164,9 +164,9 @@ private:
 
 
 template <class... InputTypes, class... OutputTypes>
-Node<InputPorts<InputTypes...>, OutputPorts<OutputTypes...>>::Node(InputPort<InputTypes>&&... inputs, OutputPort<OutputTypes>&&... outputs)
-	: m_inputs{ std::forward<InputTypes>(inputs)... },
-	  m_outputs{ std::forward<OutputTypes>(outputs)... } {}
+Node<InputPorts<InputTypes...>, OutputPorts<OutputTypes...>>::Node(InputPort<InputTypes>... inputs, OutputPort<OutputTypes>... outputs)
+	: m_inputs{ std::move(inputs)... },
+	  m_outputs{ std::move(outputs)... } {}
 
 
 template <class... InputTypes, class... OutputTypes>

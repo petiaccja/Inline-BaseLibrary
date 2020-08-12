@@ -342,6 +342,13 @@ private:
 };
 
 
+class TestNode2 : public Node<InputPorts<float>, OutputPorts<float>> {
+	using NodeT =Node<InputPorts<float>, OutputPorts<float>>;
+public:
+	TestNode2() : NodeT{ InputPort<float>{}, OutputPort<float>{} } {}	
+};
+
+
 
 
 TEST_CASE("Get node ports", "[Graph]") {
