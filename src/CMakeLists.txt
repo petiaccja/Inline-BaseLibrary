@@ -55,14 +55,3 @@ add_library(InlineLib STATIC
 	${src_memory}
 	${src_platform}
 )
-
-# Dependencies
-if (CMAKE_SYSTEM_NAME MATCHES "Windows") 
-	set(LINK_DBGHELP 1)
-else()
-	set(LINK_DBGHELP 0)
-endif()
-
-target_link_libraries(InlineLib
-	$<IF:${LINK_DBGHELP},dbghelp,>
-)

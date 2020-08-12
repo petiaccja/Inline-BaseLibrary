@@ -35,6 +35,7 @@ std::ostream& operator<<(std::ostream& os, const StackFrameT<Allocator>& frame) 
 #include <Windows.h>
 #define STACKTRACE_HPP_CLANGTIDY_FORCE_INCLUDE_ORDER_1
 #include <Dbghelp.h>
+#pragma comment(lib, "dbghelp.lib")
 
 template <template <class> class Allocator = std::allocator>
 std::vector<StackFrameT<Allocator>, Allocator<StackFrameT<Allocator>>> GetStackTrace() {
