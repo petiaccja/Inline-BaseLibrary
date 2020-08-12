@@ -55,7 +55,7 @@ std::string GraphParser::Serialize(const ISerializableNode* const* nodes,
 
 		// Create output lookup.
 		for (int j = 0; j < node->GetNumOutputs(); ++j) {
-			outputLookup[node->GetOutput(j)] = { node, j };
+			outputLookup[&node->GetOutput(j)] = { node, j };
 		}
 
 		// Create preliminary description.
@@ -85,12 +85,12 @@ std::string GraphParser::Serialize(const ISerializableNode* const* nodes,
 
 		// Iterate over all input ports.
 		for (int i = 0; i < dst->GetNumInputs(); ++i) {
-			const ISerializableInputPort* input = dst->GetInput(i);
-			const ISerializableOutputPort* output = input->GetLink();
+			const ISerializableInputPort& input = dst->GetInput(i);
 
 			// If we have an output port linked, add a link desc.
-			if (output) {
-				auto nit = outputLookup.find(output);
+			if (input.IsLinked()) {
+				const ISerializableOutputPort& output = input.GetLink();
+				auto nit = outputLookup.find(&output);
 				assert(nit != outputLookup.end());
 				const auto [src, srcpidx] = nit->second;
 
@@ -114,9 +114,9 @@ std::string GraphParser::Serialize(const ISerializableNode* const* nodes,
 				linkDescs.push_back(desc);
 			}
 			// If no link, save the default value.
-			else if (input->IsSet()) {
+			else if (input.IsSet()) {
 				try {
-					std::optional<std::string> value = input->ToString();
+					std::optional<std::string> value = input.ToString();
 
 					auto& nodeInfo = nodeDescLookup[dst];
 					if (nodeInfo.defaultInputs.size() < i + 1) {
@@ -183,7 +183,7 @@ size_t GraphParser::FindNode(const std::string& name) const {
 }
 
 
-ISerializableInputPort* GraphParser::FindInputPort(ISerializableNode* holder, const std::optional<int>& index,
+ISerializableInputPort& GraphParser::FindInputPort(ISerializableNode* holder, const std::optional<int>& index,
 												   const std::optional<std::string>& name) {
 	if (index) {
 		return FindInputPort(holder, index.value());
@@ -195,7 +195,7 @@ ISerializableInputPort* GraphParser::FindInputPort(ISerializableNode* holder, co
 }
 
 
-ISerializableInputPort* GraphParser::FindInputPort(ISerializableNode* holder, const std::string& name) {
+ISerializableInputPort& GraphParser::FindInputPort(ISerializableNode* holder, const std::string& name) {
 	for (auto i : Range(holder->GetNumInputs())) {
 		if (holder->GetInputName(i) == name) {
 			return holder->GetInput(i);
@@ -205,7 +205,7 @@ ISerializableInputPort* GraphParser::FindInputPort(ISerializableNode* holder, co
 }
 
 
-ISerializableInputPort* GraphParser::FindInputPort(ISerializableNode* holder, int index) {
+ISerializableInputPort& GraphParser::FindInputPort(ISerializableNode* holder, int index) {
 	if (index < holder->GetNumInputs() && 0 <= index) {
 		return holder->GetInput(index);
 	}
@@ -213,7 +213,7 @@ ISerializableInputPort* GraphParser::FindInputPort(ISerializableNode* holder, in
 }
 
 
-ISerializableOutputPort* GraphParser::FindOutputPort(ISerializableNode* holder, const std::optional<int>& index,
+ISerializableOutputPort& GraphParser::FindOutputPort(ISerializableNode* holder, const std::optional<int>& index,
 													 const std::optional<std::string>& name) {
 	if (index) {
 		return FindOutputPort(holder, index.value());
@@ -225,7 +225,7 @@ ISerializableOutputPort* GraphParser::FindOutputPort(ISerializableNode* holder, 
 }
 
 
-ISerializableOutputPort* GraphParser::FindOutputPort(ISerializableNode* holder, const std::string& name) {
+ISerializableOutputPort& GraphParser::FindOutputPort(ISerializableNode* holder, const std::string& name) {
 	for (auto i : Range(holder->GetNumOutputs())) {
 		if (holder->GetOutputName(i) == name) {
 			return holder->GetOutput(i);
@@ -235,7 +235,7 @@ ISerializableOutputPort* GraphParser::FindOutputPort(ISerializableNode* holder, 
 }
 
 
-ISerializableOutputPort* GraphParser::FindOutputPort(ISerializableNode* holder, int index) {
+ISerializableOutputPort& GraphParser::FindOutputPort(ISerializableNode* holder, int index) {
 	if (index < holder->GetNumOutputs() && 0 <= index) {
 		return holder->GetOutput(index);
 	}

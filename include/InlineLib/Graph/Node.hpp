@@ -58,19 +58,17 @@ public:
 	virtual size_t GetNumOutputs() const override = 0;
 
 	/// <summary> Get pointer to the indexth input port. </summary>
-	virtual InputPortBase* GetInput(size_t index) override = 0;
+	virtual InputPortBase& GetInput(size_t index) override = 0;
 	/// <summary> Get pointer to the indexth output port. </summary>
-	virtual OutputPortBase* GetOutput(size_t index) override = 0;
+	virtual OutputPortBase& GetOutput(size_t index) override = 0;
 
 	/// <summary> Get pointer to the indexth input port. </summary>
-	virtual const InputPortBase* GetInput(size_t index) const override = 0;
+	virtual const InputPortBase& GetInput(size_t index) const override = 0;
 	/// <summary> Get pointer to the indexth output port. </summary>
-	virtual const OutputPortBase* GetOutput(size_t index) const override = 0;
+	virtual const OutputPortBase& GetOutput(size_t index) const override = 0;
 
 	/// <summary> Read and process input ports and activate output. </summary>
 	virtual void Update() = 0;
-	/// <summary> Called by the input ports of the node to notify new data. </summary>
-	virtual void Notify(InputPortBase* sender) = 0;
 
 	/// <summary> Returns the name of the input port. This is optionally specified for the node class. </summary>
 	virtual const std::string& GetInputName(size_t index) const override {
@@ -102,254 +100,129 @@ protected:
 
 
 /// <summary>
-/// <para> Generate input ports of specified types. </para>
-/// <para>
-///	Specify port type on the template argument list. InputPortConfig
-/// then contains the specified port types, which may be accessed by
-/// GetInput&lt;Index&gt;(). Inhreit from this class to add input nodes
-/// and implement required input-related interfaces.
-/// </para>
+/// A list for the types of input ports used in conjunction with <see cref="Node"/>.
 /// </summary>
-template <class... Types>
-class InputPortConfig : virtual public NodeBase {
-public:
-	/// <summary> Initialize input ports. </sumamry>
-	InputPortConfig() {
-		InitTable<sizeof...(Types) - 1>();
-	}
-	/// <summary> Initiaize input ports from given arguments. </summary>
-	template <class... Args>
-	explicit InputPortConfig(Args&&... args)
-		: ports(std::forward<Args>(args)...) {
-		InitTable<sizeof...(Types) - 1>();
-	}
-
-	/// <summary> Get reference to typed input port by its index. </summary>
-	template <size_t Index>
-	auto& GetInput() {
-		return std::get<Index>(ports);
-	}
-
-	/// <summary> Get reference to typed input port by its index. </summary>
-	template <size_t Index>
-	const auto& GetInput() const {
-		return std::get<Index>(ports);
-	}
-
-	/// <summary> Get pointer to the indexth input port. </summary>
-	InputPortBase* GetInput(size_t index) override {
-		assert(index < sizeof...(Types));
-		return portTable[index];
-	}
-
-	/// <summary> Get pointer to the indexth input port. </summary>
-	const InputPortBase* GetInput(size_t index) const override {
-		assert(index < sizeof...(Types));
-		return portTable[index];
-	}
-
-	/// <summary> Returns the number of inputs. </summary>
-	size_t GetNumInputs() const override {
-		return sizeof...(Types);
-	}
-
-	/// <summary> Returns the number of inputs. </summary>
-	static constexpr size_t Info_GetNumInputs() {
-		return sizeof...(Types);
-	}
-
-	/// <summary> Get typeid's of input types. </summary>
-	static const std::vector<std::type_index>& Info_GetInputTypes() {
-		static std::vector<std::type_index> inputTypes = {
-			typeid(Types)...
-		};
-		return inputTypes;
-	}
-
-private:
-	// Initialize a pointer table to get inputs with dynamic indices.
-	template <size_t Index, typename std::enable_if<Index != 0, void>::type* = nullptr>
-	void InitTable() {
-		portTable[Index] = &std::get<Index>(ports);
-		InitTable<Index - 1>();
-	}
-	template <size_t Index, typename std::enable_if<Index == 0, void>::type* = nullptr>
-	void InitTable() {
-		portTable[0] = &std::get<0>(ports);
-	}
-
-	std::tuple<InputPort<Types>...> ports;
-	InputPortBase* portTable[sizeof...(Types)];
-};
-
-
-// Template specialization for empty input port config.
-template <>
-class InputPortConfig<> : virtual public NodeBase {
-public:
-	/// <summary> Get reference to typed input port by its index. </summary>
-	template <size_t Index>
-	auto& GetInput() {
-		static_assert(false);
-	}
-
-	/// <summary> Get reference to typed input port by its index. </summary>
-	template <size_t Index>
-	const auto& GetInput() const {
-		static_assert(false);
-	}
-
-
-	size_t GetNumInputs() const override {
-		return 0;
-	}
-
-	/// <summary> Get pointer to the indexth input port. </summary>
-	InputPortBase* GetInput(size_t index) override {
-		return nullptr;
-	}
-
-	/// <summary> Get pointer to the indexth input port. </summary>
-	const InputPortBase* GetInput(size_t index) const override {
-		return nullptr;
-	}
-
-	/// <summary> Returns the number of inputs. </summary>
-	static constexpr size_t Info_GetNumInputs() {
-		return 0;
-	}
-
-	/// <summary> Get typeid's of input types. </summary>
-	static const std::vector<std::type_index>& Info_GetInputTypes() {
-		static std::vector<std::type_index> inputTypes{};
-		return inputTypes;
-	}
-};
-
-
+/// <typeparam name="...InputTypes"> Types of the input ports of the node. </typeparam>
+template <class... InputTypes>
+class InputPorts {};
 
 /// <summary>
-/// <para> Generate output ports of specified types. </para>
-/// <para>
-///	Specify port type on the template argument list. OutputPortConfig
-/// then contains the specified port types, which may be accessed by
-/// GetOutput&lt;Index&gt;(). Inhreit from this class to add output nodes
-/// and implement required output-related interfaces.
-/// </para>
+/// A list for the types of output ports used in conjunction with <see cref="Node"/>.
 /// </summary>
-template <class... Types>
-class OutputPortConfig : virtual public NodeBase {
+/// <typeparam name="...OutputTypes"> Types of the output ports of the node. </typeparam>
+template <class... OutputTypes>
+class OutputPorts {};
+
+template <class InputPorts, class OutputPorts>
+class Node;
+
+/// <summary> A node with a fixed set of input and output ports. </summary>
+/// <typeparam name="...InputTypes"> Types of the input ports of the node. </typeparam>
+/// <typeparam name="...OutputTypes"> Types of the output ports of the node. </typeparam>
+template <class... InputTypes, class... OutputTypes>
+class Node<InputPorts<InputTypes...>, OutputPorts<OutputTypes...>> : public NodeBase {
 public:
-	/// <summary> Initialize output ports. </sumamry>
-	OutputPortConfig() {
-		InitTable<sizeof...(Types) - 1>();
-	}
-	/// <summary> Initiaize output ports from given arguments. </summary>
-	template <class... Args>
-	explicit OutputPortConfig(Args&&... args)
-		: ports(std::forward<Args>(args)...) {
-		InitTable<sizeof...(Types) - 1>();
-	}
+	Node() = default;
+	Node(InputPort<InputTypes>&&... inputs, OutputPort<OutputTypes>&&... outputs);
 
-	/// <summary> Get reference to typed output port by its index. </summary>
-	template <size_t Index>
-	auto& GetOutput() {
-		return std::get<Index>(ports);
-	}
+	template <InputPortConverter Func>
+	Node(Func commonConverter);
 
-	/// <summary> Get reference to typed output port by its index. </summary>
-	template <size_t Index>
-	const auto& GetOutput() const {
-		return std::get<Index>(ports);
-	}
+	size_t GetNumInputs() const override;
+	size_t GetNumOutputs() const override;
 
-	/// <summary> Get pointer to the indexth output port. </summary>
-	OutputPortBase* GetOutput(size_t index) override {
-		assert(index < sizeof...(Types));
-		return portTable[index];
-	}
+	const InputPortBase& GetInput(size_t index) const override;
+	InputPortBase& GetInput(size_t index) override;
 
-	/// <summary> Get pointer to the indexth output port. </summary>
-	const OutputPortBase* GetOutput(size_t index) const override {
-		assert(index < sizeof...(Types));
-		return portTable[index];
-	}
-	/// <summary> Returns the number of outputs. </summary>
-	size_t GetNumOutputs() const override {
-		return sizeof...(Types);
-	}
+	const OutputPortBase& GetOutput(size_t index) const override;
+	OutputPortBase& GetOutput(size_t index) override;
 
-	/// <summary> Get typeid's of output types. </summary>
-	static const std::vector<std::type_index>& Info_GetOutputTypes() {
-		static std::vector<std::type_index> outputTypes = {
-			typeid(Types)...
-		};
-		return outputTypes;
-	}
+	template <size_t Index, class... InputTypes_, class... OutputTypes_>
+	friend const auto& GetInput(const Node<InputPorts<InputTypes_...>, OutputPorts<OutputTypes_...>>& node);
+	template <size_t Index, class... InputTypes_, class... OutputTypes_>
+	friend auto& GetInput(Node<InputPorts<InputTypes_...>, OutputPorts<OutputTypes_...>>& node);
+	template <size_t Index, class... InputTypes_, class... OutputTypes_>
+	friend const auto& GetOutput(const Node<InputPorts<InputTypes_...>, OutputPorts<OutputTypes_...>>& node);
+	template <size_t Index, class... InputTypes_, class... OutputTypes_>
+	friend auto& GetOutput(Node<InputPorts<InputTypes_...>, OutputPorts<OutputTypes_...>>& node);
 
-	/// <summary> Returns the number of outputs. </summary>
-	static constexpr size_t Info_GetNumOutputs() {
-		return sizeof...(Types);
+private:
+	template <class Return, size_t TrialIndex, class Tuple>
+	static Return DynamicGet(size_t index, Tuple&& tuple) {
+		if constexpr (TrialIndex < std::tuple_size_v<std::decay_t<Tuple>>) {
+			return TrialIndex == index ? std::get<TrialIndex>(std::forward<Tuple>(tuple)) : DynamicGet<Return, TrialIndex + 1>(index, std::forward<Tuple>(tuple));
+		}
+		else {
+			throw OutOfRangeException("Index larger than tuple size.");
+		}
 	}
 
 private:
-	template <size_t Index, typename std::enable_if<Index != 0, void>::type* = nullptr>
-	void InitTable() {
-		portTable[Index] = &std::get<Index>(ports);
-		InitTable<Index - 1>();
-	}
-	template <size_t Index, typename std::enable_if<Index == 0, void>::type* = nullptr>
-	void InitTable() {
-		portTable[0] = &std::get<0>(ports);
-	}
-
-	std::tuple<OutputPort<Types>...> ports;
-	OutputPortBase* portTable[sizeof...(Types)];
+	std::tuple<InputPort<InputTypes>...> m_inputs;
+	std::tuple<OutputPort<OutputTypes>...> m_outputs;
 };
 
 
-// Template specialization for empty output port config.
-template <>
-class OutputPortConfig<> : virtual public NodeBase {
-public:
-	/// <summary> Get reference to typed output port by its index. </summary>
-	template <size_t Index>
-	auto& GetOutput() {
-		static_assert(false);
-	}
+template <class... InputTypes, class... OutputTypes>
+Node<InputPorts<InputTypes...>, OutputPorts<OutputTypes...>>::Node(InputPort<InputTypes>&&... inputs, OutputPort<OutputTypes>&&... outputs)
+	: m_inputs{ std::forward<InputTypes>(inputs)... },
+	  m_outputs{ std::forward<OutputTypes>(outputs)... } {}
 
-	/// <summary> Get reference to typed output port by its index. </summary>
-	template <size_t Index>
-	const auto& GetOutput() const {
-		static_assert(false);
-	}
 
-	/// <summary> Returns the number of outputs. </summary>
-	size_t GetNumOutputs() const override {
-		return 0;
-	}
+template <class... InputTypes, class... OutputTypes>
+template <InputPortConverter Func>
+Node<InputPorts<InputTypes...>, OutputPorts<OutputTypes...>>::Node(Func commonConverter)
+	: m_inputs{ InputPort<InputTypes>{ commonConverter }... },
+	  m_outputs{} {}
 
-	/// <summary> Get pointer to the indexth output port. </summary>
-	OutputPortBase* GetOutput(size_t index) override {
-		return nullptr;
-	}
 
-	/// <summary> Get pointer to the indexth output port. </summary>
-	const OutputPortBase* GetOutput(size_t index) const override {
-		return nullptr;
-	}
+template <class... InputTypes, class... OutputTypes>
+size_t Node<InputPorts<InputTypes...>, OutputPorts<OutputTypes...>>::GetNumInputs() const {
+	return std::tuple_size_v<std::decay_t<decltype(m_inputs)>>;
+}
 
-	/// <summary> Get typeid's of output types. </summary>
-	static const std::vector<std::type_index>& Info_GetOutputTypes() {
-		static std::vector<std::type_index> outputTypes{};
-		return outputTypes;
-	}
+template <class... InputTypes, class... OutputTypes>
+size_t Node<InputPorts<InputTypes...>, OutputPorts<OutputTypes...>>::GetNumOutputs() const {
+	return std::tuple_size_v<std::decay_t<decltype(m_outputs)>>;
+}
 
-	/// <summary> Returns the number of outputs. </summary>
-	static constexpr size_t Info_GetNumOutputs() {
-		return 0;
-	}
-};
+template <class... InputTypes, class... OutputTypes>
+const InputPortBase& Node<InputPorts<InputTypes...>, OutputPorts<OutputTypes...>>::GetInput(size_t index) const {
+	return DynamicGet<const InputPortBase&, 0>(index, m_inputs);
+}
+
+template <class... InputTypes, class... OutputTypes>
+InputPortBase& Node<InputPorts<InputTypes...>, OutputPorts<OutputTypes...>>::GetInput(size_t index) {
+	return DynamicGet<InputPortBase&, 0>(index, m_inputs);
+}
+
+template <class... InputTypes, class... OutputTypes>
+const OutputPortBase& Node<InputPorts<InputTypes...>, OutputPorts<OutputTypes...>>::GetOutput(size_t index) const {
+	return DynamicGet<const OutputPortBase&, 0>(index, m_outputs);
+}
+
+template <class... InputTypes, class... OutputTypes>
+OutputPortBase& Node<InputPorts<InputTypes...>, OutputPorts<OutputTypes...>>::GetOutput(size_t index) {
+	return DynamicGet<OutputPortBase&, 0>(index, m_outputs);
+}
+
+
+template <size_t Index, class... InputTypes_, class... OutputTypes_>
+const auto& GetInput(const Node<InputPorts<InputTypes_...>, OutputPorts<OutputTypes_...>>& node) {
+	return std::get<Index>(node.m_inputs);
+}
+template <size_t Index, class... InputTypes_, class... OutputTypes_>
+auto& GetInput(Node<InputPorts<InputTypes_...>, OutputPorts<OutputTypes_...>>& node) {
+	return std::get<Index>(node.m_inputs);
+}
+template <size_t Index, class... InputTypes_, class... OutputTypes_>
+const auto& GetOutput(const Node<InputPorts<InputTypes_...>, OutputPorts<OutputTypes_...>>& node) {
+	return std::get<Index>(node.m_outputs);
+}
+template <size_t Index, class... InputTypes_, class... OutputTypes_>
+auto& GetOutput(Node<InputPorts<InputTypes_...>, OutputPorts<OutputTypes_...>>& node) {
+	return std::get<Index>(node.m_outputs);
+}
 
 
 

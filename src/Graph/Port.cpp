@@ -2,6 +2,7 @@
 #include <InlineLib/Graph/Node.hpp>
 
 #include <cassert>
+#include <sstream>
 
 
 namespace inl {
@@ -22,50 +23,38 @@ InputPortBase::~InputPortBase() {
 }
 
 
-void InputPortBase::Link(OutputPortBase* source) {
-	if (GetLink() != nullptr) {
+void InputPortBase::Link(OutputPortBase& source) {
+	if (IsLinked()) {
 		throw InvalidStateException("Input port is already linked.");
 	}
 
 	// just let the source OutputPortBase do the nasty stuff
 	// note that OutputPortBase is a friend, and sets this' members correctly
-	return source->Link(this);
+	return source.Link(*this);
 }
 
 
 void InputPortBase::Unlink() {
-	if (link != nullptr) {
+	if (IsLinked()) {
 		// note that OutputPortBase is a friend, and sets this' members correctly
-		link->Unlink(this);
+		link->Unlink(*this);
 	}
 }
 
+bool InputPortBase::IsLinked() const {
+	return link != nullptr;
+}
 
-OutputPortBase* InputPortBase::GetLink() const {
-	return link;
+
+OutputPortBase& InputPortBase::GetLink() const {
+	if (!link) {
+		throw InvalidStateException("Port is not linked.");
+	}
+	return *link;
 }
 
 void InputPortBase::SetLinkState(OutputPortBase* link) {
 	this->link = link;
-}
-
-
-/// Add observer node.
-/// Observers are notified when new input is set.
-void InputPortBase::AddObserver(NodeBase* observer) {
-	observers.insert(observer);
-}
-
-/// Remove observer.
-void InputPortBase::RemoveObserver(NodeBase* observer) {
-	observers.erase(observer);
-}
-
-
-void InputPortBase::NotifyAll() {
-	for (auto v : observers) {
-		v->Notify(this);
-	}
 }
 
 
@@ -85,32 +74,40 @@ OutputPortBase::~OutputPortBase() {
 }
 
 
-void OutputPortBase::Link(InputPortBase* destination) {
-	if (destination->link != nullptr) {
+void OutputPortBase::Link(InputPortBase& destination) {
+	if (destination.IsLinked()) {
 		throw InvalidArgumentException("Input port is already linked.");
 	}
 
-	if (destination->IsCompatible(GetType()) || GetType() == typeid(Any)) {
-		links.insert(destination);
-		destination->SetLinkState(this);
+	if (destination.IsCompatible(GetType()) || GetType() == typeid(Any)) {
+		links.insert(&destination);
+		destination.link = this;
 	}
 	else {
 		std::stringstream ss;
-		ss << GetType().name() << " -> " << destination->GetType().name();
+		ss << GetType().name() << " -> " << destination.GetType().name();
 		throw InvalidArgumentException("Port types are not compatible.", ss.str());
 	}
 }
 
 
-void OutputPortBase::Unlink(InputPortBase* other) {
+void OutputPortBase::Unlink(InputPortBase& other) {
 	std::set<InputPortBase*>::iterator it;
 
-	it = links.find(other);
+	it = links.find(&other);
 	if (it != links.end()) {
 		links.erase(it);
-		other->SetLinkState(nullptr);
+		other.link = nullptr;
 		return;
 	}
+}
+
+bool OutputPortBase::IsLinked() const {
+	return !links.empty();
+}
+
+size_t OutputPortBase::GetNumLinks() const {
+	return links.size();
 }
 
 
@@ -142,25 +139,76 @@ OutputPortBase::ConstLinkIterator OutputPortBase::cend() const {
 
 
 
-// This single function had to be moved to this cpp file because
-// the declaration of InputPort<AnyType>::Set(void) is not available
-// if this function definition is inlined to the class.
-void OutputPort<void>::Set() {
-	for (auto v : links) {
-		if (v->GetType() == typeid(void)) {
-			static_cast<InputPort<void>*>(v)->Set();
-		}
-		else {
-			assert(false);
-		}
+
+
+//------------------------------------------------------------------------------
+// Any specializations.
+//------------------------------------------------------------------------------
+
+void InputPort<std::any>::Set(std::any value) {
+	data = std::move(value);
+}
+
+std::any& InputPort<std::any>::Get() {
+	if (!data) {
+		throw InvalidStateException("There is no value set.");
 	}
+	return data.value();
+}
+
+const std::any& InputPort<std::any>::Get() const {
+	if (!data) {
+		throw InvalidStateException("There is no value set.");
+	}
+	return data.value();
+}
+
+void InputPort<std::any>::Clear() {
+	data = {};
+}
+
+bool InputPort<std::any>::IsSet() const {
+	return bool(data);
+}
+
+std::type_index InputPort<std::any>::GetType() const {
+	return typeid(std::any);
+}
+
+std::string InputPort<std::any>::ToString() const {
+	throw NotImplementedException();
+}
+
+bool InputPort<std::any>::IsCompatible(std::type_index type) const {
+	return type != typeid(void);
 }
 
 
 
-// explicit instantiations
-template class InputPort<Any>;
-template class OutputPort<Any>;
+void OutputPort<std::any>::Set(const std::any& data) {
+	for (auto v : links) {
+		v->Set(data);
+	}
+}
+
+void OutputPort<std::any>::Set(std::any&& data) {
+	auto first = links.begin();
+	auto last = links.end();
+	if (first != last) {
+		--last;
+	}
+
+	for (; first != last; ++first) {
+		auto v = *first;
+		v->Set(data);
+	}
+	if (first != links.end()) {
+		auto v = *first;
+		v->Set(std::move(data));
+	}
+}
+
+
 
 
 } // namespace inl

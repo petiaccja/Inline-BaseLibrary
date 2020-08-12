@@ -8,22 +8,12 @@ namespace inl {
 
 template <class ArithmeticT, class Operator, const char* name, const char* op1desc, const char* op2desc, const char* resdesc>
 class BinaryArithmeticNode
-	: public InputPortConfig<ArithmeticT, ArithmeticT>,
-	  public OutputPortConfig<ArithmeticT> {
+	: public Node<InputPorts<ArithmeticT, ArithmeticT>, OutputPorts<ArithmeticT>> {
 public:
-	BinaryArithmeticNode() {
-		this->template GetInput<0>().AddObserver(this);
-		this->template GetInput<1>().AddObserver(this);
-	}
-
 	void Update() override {
-		ArithmeticT a = this->template GetInput<0>().Get();
-		ArithmeticT b = this->template GetInput<1>().Get();
-		this->template GetOutput<0>().Set(Operator()(a, b));
-	}
-
-	void Notify(InputPortBase* sender) override {
-		Update();
+		ArithmeticT a = *GetInput<0>(*this);
+		ArithmeticT b = *GetInput<1>(*this);
+		GetOutput<0>(*this) << Operator()(a, b);
 	}
 
 	static std::string Info_GetName() {

@@ -1,7 +1,6 @@
 #include <InlineLib/Graph/NodeFactory.hpp>
 #include <InlineLib/Graph/Node_Arithmetic.hpp>
 #include <InlineLib/Graph/Node_Comparison.hpp>
-#include <InlineLib/Graph/Node_Logic.hpp>
 #include <InlineLib/Graph/Node_MathFunctions.hpp>
 
 namespace inl {
@@ -166,12 +165,6 @@ void RegisterFloatMathNodes(NodeFactory* factory, const char* group) {
 }
 
 
-void RegisterLogicNodes(NodeFactory* factory, const char* group) {
-	factory->RegisterNodeClass<LogicAny>(group);
-	factory->RegisterNodeClass<LogicAll>(group);
-}
-
-
 const char AddStrings::Name[] = "Add:Adds the two inputs";
 const char AddStrings::R[] = "R:A+B";
 const char AddStrings::A[] = "A";
@@ -286,6 +279,5 @@ extern "C" bool g_autoRegisterNodes = [] {
 	inl::RegisterFloatArithmeticNodes(&inl::NodeFactory_Singleton::GetInstance(), "Float");
 	inl::RegisterFloatComparisonNodes(&inl::NodeFactory_Singleton::GetInstance(), "Float");
 	inl::RegisterFloatMathNodes(&inl::NodeFactory_Singleton::GetInstance(), "Float");
-	inl::RegisterLogicNodes(&inl::NodeFactory_Singleton::GetInstance(), "Logic");
 	return true;
 }();

@@ -11,20 +11,11 @@ namespace inl {
 
 template <class ArithmeticT, ArithmeticT (*Function)(ArithmeticT), const char* name>
 class MathFunctionNode
-	: public InputPortConfig<ArithmeticT>,
-	  public OutputPortConfig<ArithmeticT> {
+	: public Node<InputPorts<ArithmeticT>, OutputPorts<ArithmeticT>> {
 public:
-	MathFunctionNode() {
-		this->template GetInput<0>().AddObserver(this);
-	}
-
 	void Update() override final {
-		ArithmeticT a = this->template GetInput<0>().Get();
-		this->template GetOutput<0>().Set(Function(a));
-	}
-
-	void Notify(InputPortBase* sender) override {
-		Update();
+		ArithmeticT a = *GetInput<0>(*this);
+		GetOutput<0>(*this) << Function(a);
 	}
 
 	static std::string Info_GetName() {

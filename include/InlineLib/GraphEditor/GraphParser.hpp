@@ -55,12 +55,12 @@ public:
 	size_t FindNode(int id) const;
 	size_t FindNode(const std::string& name) const;
 
-	ISerializableInputPort* FindInputPort(ISerializableNode* holder, const std::optional<int>& index, const std::optional<std::string>& name);
-	ISerializableInputPort* FindInputPort(ISerializableNode* holder, const std::string& name);
-	ISerializableInputPort* FindInputPort(ISerializableNode* holder, int index);
-	ISerializableOutputPort* FindOutputPort(ISerializableNode* holder, const std::optional<int>& index, const std::optional<std::string>& name);
-	ISerializableOutputPort* FindOutputPort(ISerializableNode* holder, const std::string& name);
-	ISerializableOutputPort* FindOutputPort(ISerializableNode* holder, int index);
+	ISerializableInputPort& FindInputPort(ISerializableNode* holder, const std::optional<int>& index, const std::optional<std::string>& name);
+	ISerializableInputPort& FindInputPort(ISerializableNode* holder, const std::string& name);
+	ISerializableInputPort& FindInputPort(ISerializableNode* holder, int index);
+	ISerializableOutputPort& FindOutputPort(ISerializableNode* holder, const std::optional<int>& index, const std::optional<std::string>& name);
+	ISerializableOutputPort& FindOutputPort(ISerializableNode* holder, const std::string& name);
+	ISerializableOutputPort& FindOutputPort(ISerializableNode* holder, int index);
 
 private:
 	void ParseDocument(const std::string& document);

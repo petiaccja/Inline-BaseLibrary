@@ -6,22 +6,12 @@ namespace inl {
 
 template <typename OperandT, typename OperatorT, const char* name, const char* op1desc, const char* op2desc, const char* resdesc>
 class ComparsionNode
-	: public InputPortConfig<OperandT, OperandT>,
-	  public OutputPortConfig<bool> {
+	: public Node<InputPorts<OperandT, OperandT>, OutputPorts<bool>> {
 public:
-	ComparsionNode() {
-		this->template GetInput<0>().AddObserver(this);
-		this->template GetInput<1>().AddObserver(this);
-	}
-
 	void Update() override {
-		auto in0 = this->template GetInput<0>().Get();
-		auto in1 = this->template GetInput<1>().Get();
-		this->template GetOutput<0>().Set(OperatorT()(in0, in1));
-	}
-
-	void Notify(InputPortBase* sender) override {
-		Update();
+		auto in0 = *GetInput<0>(*this);
+		auto in1 = *GetInput<1>(*this);
+		GetOutput<0>(*this) << OperatorT()(in0, in1);
 	}
 
 	static std::string Info_GetName() {
