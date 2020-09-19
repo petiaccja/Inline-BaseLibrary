@@ -82,12 +82,12 @@ std::filesystem::path System::GetExecutableDir() {
 }
 
 std::filesystem::path System::GetAppdataDir() {
-	wchar_t** ppszPath = nullptr;
-	AtScopeExit deallocPath{ [&] { CoTaskMemFree(ppszPath); } };
-	HRESULT hr = SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, ppszPath);
+	wchar_t* pszPath = nullptr;
+	AtScopeExit deallocPath{ [&] { CoTaskMemFree(pszPath); } };
+	HRESULT hr = SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &pszPath);
 	if (SUCCEEDED(hr)) {
 		static_assert(sizeof(wchar_t) == sizeof(uint16_t));
-		std::filesystem::path p{ *ppszPath };
+		return std::filesystem::path{ pszPath };
 	}
 	throw RuntimeException("Windows won't return the path.");
 }

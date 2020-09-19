@@ -240,7 +240,7 @@ TEST_CASE("Set converted data via link", "[Graph]") {
 	REQUIRE(inputPort.Get() == 10.f);
 }
 
-TEST_CASE("Set data via multiple links", "[Graph]") {
+TEST_CASE("Set data via multiple links move", "[Graph]") {
 	InputPort<int> inputPort1;
 	InputPort<int> inputPort2;
 	InputPort<int> inputPort3;
@@ -250,9 +250,32 @@ TEST_CASE("Set data via multiple links", "[Graph]") {
 	outputPort.Link(inputPort3);
 
 	outputPort.Set(10);
+	REQUIRE(inputPort1.IsSet());
+	REQUIRE(inputPort2.IsSet());
+	REQUIRE(inputPort3.IsSet());
 	REQUIRE(inputPort1.Get() == 10);
 	REQUIRE(inputPort2.Get() == 10);
 	REQUIRE(inputPort3.Get() == 10);
+}
+
+
+TEST_CASE("Set data via multiple links copy", "[Graph]") {
+	InputPort<int> inputPort1;
+	InputPort<int> inputPort2;
+	InputPort<int> inputPort3;
+	OutputPort<int> outputPort;
+	outputPort.Link(inputPort1);
+	outputPort.Link(inputPort2);
+	outputPort.Link(inputPort3);
+
+	int value = 11;
+	outputPort.Set(value);
+	REQUIRE(inputPort1.IsSet());
+	REQUIRE(inputPort2.IsSet());
+	REQUIRE(inputPort3.IsSet());
+	REQUIRE(inputPort1.Get() == 11);
+	REQUIRE(inputPort2.Get() == 11);
+	REQUIRE(inputPort3.Get() == 11);
 }
 
 
